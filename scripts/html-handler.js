@@ -2,6 +2,7 @@ define(['data-layer', 'field', 'cell'], function(dataLayer, field, cell) {
     var DataLayer = dataLayer.dataLayer;
     var Cell = cell.cell;
     var Field = field.field;
+    var DataLayer = dataLayer.dl;
     function HtmlHandler(htmlNode) {
         this.cells = [];
         this.init(htmlNode);
@@ -11,7 +12,7 @@ define(['data-layer', 'field', 'cell'], function(dataLayer, field, cell) {
     HtmlHandler.prototype = {
         constructor: HtmlHandler,
         init: function(fieldNode) {
-            this.dl = new DataLayer();
+            this.dl = new DataLayer(this.fieldSize);
             var row = [];
             this.field = new Field(fieldNode);
             for(var i = 0; i < this.fieldSize; i++) {
