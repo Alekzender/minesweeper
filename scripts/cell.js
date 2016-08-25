@@ -3,20 +3,13 @@ define([], function() {
         this.x = x;
         this.y = y;
         this.value = this.EMPTY;
-        this.init();
         this.fired = false;
     }
 
     Cell.prototype = {
         constructor: Cell,
-        init: function() {
-
-        },
-        getHtml: function() {
-
-        },
         BOMB: '*',
-        EMPTY: ''
+        EMPTY: '0'
     }
 
     return {

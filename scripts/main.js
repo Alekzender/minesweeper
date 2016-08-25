@@ -1,5 +1,7 @@
 require(['data-layer'], function(dataLayer) {
-    var dl = new dataLayer.dl(9),
+    var dl = new dataLayer.dl(9, function() {
+        showVictory();
+    }),
         field = document.querySelector('#field'),
         container = document.createElement('div'),
         cellSize = 40,
@@ -17,7 +19,8 @@ require(['data-layer'], function(dataLayer) {
             cell.setAttribute('data-y', j);
             container.appendChild(cell);
             dl.setCellNode(i, j, cell);
-            cell.addEventListener('click', onCellClick)
+            cell.addEventListener('click', onCellClick);
+            cell.addEventListener('contextmenu', placeFlag);
         }
     }
 
@@ -25,8 +28,8 @@ require(['data-layer'], function(dataLayer) {
 
     function onCellClick(e) {
         var element = e.target,
-            x = element.getAttribute('data-x'),
-            y = element.getAttribute('data-y'),
+            x = +element.getAttribute('data-x'),
+            y = +element.getAttribute('data-y'),
             result = '';
 
         if(hasClass(element, 'clicked')) {
@@ -47,14 +50,36 @@ require(['data-layer'], function(dataLayer) {
         }
     }
 
+    function placeFlag (e) {
+        var element = e.target,
+            x = +element.getAttribute('data-x'),
+            y = +element.getAttribute('data-y');
+
+        e.preventDefault();
+
+        if(hasClass(element, 'flag')) {
+            dl.removeFlag(x, y);
+            hideFlag(element);
+            return;
+        }
+
+
+        dl.placeFlag(x, y);
+        showFlag(element);
+
+    }
+
     function hasClass(el, cls) {
         return el.className && new RegExp("(\\s|^)" + cls + "(\\s|$)").test(el.className);
     }
 
     function showAllBombs(bombs) {
-        bombs.forEach(function(el) {
-            dl.fireCell(el.x, el.y);
-            el.node.classList.add('bomb');
+        for(var i = 0; i < bombs.length; i++) {
+            bombs[i].node.classList.add('bomb');
+        }
+
+        setTimeout(function() {
+            alert('You lose');
         })
     }
 
@@ -64,5 +89,18 @@ require(['data-layer'], function(dataLayer) {
         })
     }
 
+    function showFlag(element) {
+        element.classList.add('flag');
+        element.classList.add('clicked');
+    }
+
+    function hideFlag(element) {
+        element.classList.remove('flag');
+        element.classList.remove('clicked');
+    }
+
+    function showVictory() {
+        alert('You win!!!');
+    }
 
 })

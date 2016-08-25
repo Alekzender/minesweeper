@@ -1,13 +1,15 @@
 define(['cell'], function(cell) {
     var Cell = cell.cell;
 
-
-
-    function DataLayer(size) {
+    function DataLayer(size, onVictory) {
         this.size = size;
-        this.minesNum = 10;
+        this.bombsNum = 10;
         this.matrix = [];
         this.bombs = [];
+        this.flags = [];
+        this.fired = 0;
+        this.total = this.size * this.size;
+        this.onVictory = onVictory;
         this.init();
     }
 
@@ -33,7 +35,7 @@ define(['cell'], function(cell) {
         placeBombs: function() {
             var that = this,
                 counter;
-            for(var i = 0; i < this.minesNum; i++) {
+            for(var i = 0; i < this.bombsNum; i++) {
                 counter = 0;
                 placeBombAtRandomPosition();
             }
@@ -75,7 +77,7 @@ define(['cell'], function(cell) {
 
                     nearBombs = this.countNearElements(i, j, target).number;
 
-                    currentCell.value = nearBombs > 0 ? nearBombs : '';
+                    currentCell.value = nearBombs > 0 ? nearBombs : Cell.prototype.EMPTY;
                 }
             }
         },
@@ -96,14 +98,15 @@ define(['cell'], function(cell) {
                     }
                 }
 
-                if(y < this.size - 2) {
+                if(y < this.size - 1) {
                     if(this.matrix[x-1][y+1].value === target) {
+                        counter++;
                         array.push((this.matrix[x-1][y+1]))
                     }
                 }
             }
 
-            if(x < this.size - 2) {
+            if(x < this.size - 1) {
                 if(this.matrix[x+1][y].value === target) {
                     counter++;
                     array.push(this.matrix[x+1][y]);
@@ -116,7 +119,7 @@ define(['cell'], function(cell) {
                     }
                 }
 
-                if(y < this.size - 2) {
+                if(y < this.size - 1) {
                     if(this.matrix[x+1][y+1].value === target) {
                         counter++;
                         array.push(this.matrix[x+1][y+1]);
@@ -131,7 +134,7 @@ define(['cell'], function(cell) {
                 }
             }
 
-            if(y < this.size - 2) {
+            if(y < this.size - 1) {
                 if(this.matrix[x][y+1].value === target) {
                     counter++;
                     array.push(this.matrix[x][y+1]);
@@ -156,6 +159,7 @@ define(['cell'], function(cell) {
         },
         checkCell: function(x, y) {
             var currentCell = this.matrix[x][y];
+            this.fireCell(x, y);
             if(currentCell.value === Cell.prototype.BOMB) {
                 return {
                     type: 'bombs',
@@ -171,20 +175,54 @@ define(['cell'], function(cell) {
                 return currentCell.value;
             }
         },
-        checkEmpty: function(x, y) {
-            var firedEmpty = 0;
-            var nearEmpty = [this.matrix[x][y]];
+        checkEmpty: function(x, y, arr) {
+            var newArr = this.countNearElements(x, y, Cell.prototype.EMPTY).cells;
+            arr = arr || [];
 
+             for(var i = 0; i < newArr.length; i++) {
+                if(!newArr[i].fired) {
+                    this.fireCell(newArr[i].x, newArr[i].y);
+                    this.checkEmpty(newArr[i].x, newArr[i].y, arr);
+                    arr.push(newArr[i]);
+                }
+            }
 
-
-            return nearEmpty
+            return arr;
         },
         setCellNode: function(x, y, htmlNode) {
             this.matrix[x][y].node = htmlNode;
         },
         fireCell: function(x, y) {
             this.matrix[x][y].fired = true;
+            this.fired++;
+        },
+        placeFlag: function(x, y) {
+            this.flags.push(this.matrix[x][y]);
+            this.checkWin();
+        },
+        removeFlag: function(x, y) {
+            var index = this.flags.indexOf(this.matrix[x][y]);
+
+            if(index >=0) {
+                this.flags.splice(index, 1);
+            }
+        },
+        checkWin: function() {
+            var flaggedBombsNum = 0;
+
+            for(var i = 0; i < this.bombs.length; i++) {
+                if(this.flags.indexOf(this.bombs[i]) >= 0) {
+                    flaggedBombsNum++;
+                }
+            }
+
+            if(flaggedBombsNum === this.bombsNum) {
+                setTimeout(function() {
+                    this.onVictory();
+                }.bind(this));
+            }
         }
+
 
     }
 

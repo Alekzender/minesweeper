@@ -31,3 +31,8 @@
 #field .cell.bomb {
 	background: red;
 }
+
+#field .cell.flag {
+	background: url(flag.png) no-repeat 50% 50%;
+	background-size: 50% 50%;
+}
