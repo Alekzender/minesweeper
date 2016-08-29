@@ -1,15 +1,14 @@
 define(['cell'], function(cell) {
     var Cell = cell.cell;
 
-    function DataLayer(size, onVictory) {
+    function DataLayer(size) {
         this.size = size;
         this.bombsNum = 10;
         this.matrix = [];
         this.bombs = [];
         this.flags = [];
-        this.fired = 0;
+        this.firedNum = 0;
         this.total = this.size * this.size;
-        this.onVictory = onVictory;
         this.init();
     }
 
@@ -26,11 +25,40 @@ define(['cell'], function(cell) {
             for(var i = 0; i < 9; i++) {
                 matrix[i] = [];
                 for(var j = 0; j < 9; j++) {
-                    matrix[i][j] = new Cell(i, j);
+                    matrix[i][j] = addCell.call(this, i, j);
+
                 }
             }
 
+            function addCell(i, j) {
+                var cell = new Cell(i, j, this.onHitBomb.bind(this), this.onHitEmpty.bind(this), this.onPlaceFlag.bind(this));
+
+                return cell;
+            }
+
             return matrix;
+        },
+        onHitBomb: function() {
+            this.bombs.forEach(function(cell) {
+                cell.showContent();
+            })
+        },
+        onHitEmpty: function(hittedCell) {
+            var empty = this.checkEmpty(hittedCell.x, hittedCell.y),
+                notEmpty = [];
+
+            empty.forEach(function(cell) {
+                cell.showContent();
+                var x = this.getNearNotFired(cell.x, cell.y);
+
+                notEmpty = notEmpty.concat(x);
+            }.bind(this));
+            notEmpty.forEach(function(cell) {
+                cell.showContent();
+            })
+        },
+        onPlaceFlag: function(cell) {
+            this.checkWin();
         },
         placeBombs: function() {
             var that = this,
@@ -146,6 +174,59 @@ define(['cell'], function(cell) {
                 cells: array
             };
         },
+        getNearNotFired: function(x, y) {
+                array = [];
+
+            if(x >= 1) {
+                if(!this.matrix[x-1][y].fired) {
+                    array.push(this.matrix[x-1][y]);
+                }
+
+                if(y >= 1) {
+                    if(!this.matrix[x-1][y-1].fired) {
+                        array.push(this.matrix[x-1][y-1]);
+                    }
+                }
+
+                if(y < this.size - 1) {
+                    if(!this.matrix[x-1][y+1].fired) {
+                        array.push((this.matrix[x-1][y+1]))
+                    }
+                }
+            }
+
+            if(x < this.size - 1) {
+                if(!this.matrix[x+1][y].fired) {
+                    array.push(this.matrix[x+1][y]);
+                }
+
+                if(y >= 1) {
+                    if(!this.matrix[x+1][y-1].fired) {
+                        array.push(this.matrix[x+1][y-1]);
+                    }
+                }
+
+                if(y < this.size - 1) {
+                    if(!this.matrix[x+1][y+1].fired) {
+                        array.push(this.matrix[x+1][y+1]);
+                    }
+                }
+            }
+
+            if(y >= 1) {
+                if(!this.matrix[x][y-1].fired) {
+                    array.push(this.matrix[x][y-1]);
+                }
+            }
+
+            if(y < this.size - 1) {
+                if(!this.matrix[x][y+1].fired) {
+                    array.push(this.matrix[x][y+1]);
+                }
+            }
+
+            return array;
+        },
         displayMatrix: function() {
             var str = '';
             for(var i = 0; i < this.size; i++) {
@@ -157,29 +238,11 @@ define(['cell'], function(cell) {
 
             console.log(str);
         },
-        checkCell: function(x, y) {
-            var currentCell = this.matrix[x][y];
-            this.fireCell(x, y);
-            if(currentCell.value === Cell.prototype.BOMB) {
-                return {
-                    type: 'bombs',
-                    array: this.bombs
-                };
-
-            } else if(currentCell.value === Cell.prototype.EMPTY) {
-                return {
-                    type: 'empty',
-                    array: this.checkEmpty(x, y)
-                };
-            } else {
-                return currentCell.value;
-            }
-        },
         checkEmpty: function(x, y, arr) {
             var newArr = this.countNearElements(x, y, Cell.prototype.EMPTY).cells;
-            arr = arr || [];
+            arr = arr || [this.matrix[x][y]];
 
-             for(var i = 0; i < newArr.length; i++) {
+            for(var i = 0; i < newArr.length; i++) {
                 if(!newArr[i].fired) {
                     this.fireCell(newArr[i].x, newArr[i].y);
                     this.checkEmpty(newArr[i].x, newArr[i].y, arr);
@@ -189,37 +252,24 @@ define(['cell'], function(cell) {
 
             return arr;
         },
-        setCellNode: function(x, y, htmlNode) {
-            this.matrix[x][y].node = htmlNode;
-        },
         fireCell: function(x, y) {
-            this.matrix[x][y].fired = true;
-            this.fired++;
-        },
-        placeFlag: function(x, y) {
-            this.flags.push(this.matrix[x][y]);
-            this.checkWin();
-        },
-        removeFlag: function(x, y) {
-            var index = this.flags.indexOf(this.matrix[x][y]);
-
-            if(index >=0) {
-                this.flags.splice(index, 1);
-            }
+            this.matrix[x][y].fire();
+            this.firedNum++;
         },
         checkWin: function() {
             var flaggedBombsNum = 0;
 
             for(var i = 0; i < this.bombs.length; i++) {
-                if(this.flags.indexOf(this.bombs[i]) >= 0) {
+                if(this.bombs[i].flagged) {
                     flaggedBombsNum++;
                 }
             }
 
+
             if(flaggedBombsNum === this.bombsNum) {
                 setTimeout(function() {
-                    this.onVictory();
-                }.bind(this));
+                    alert();
+                });
             }
         }
 
