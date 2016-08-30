@@ -1,5 +1,5 @@
 require(['data-layer'], function(dataLayer) {
-    var dl = new dataLayer.dl(9),
+    var dl = new dataLayer.dl(9, onVictory, onFail),
         field = document.querySelector('#field'),
         container = document.createElement('div');
 
@@ -13,6 +13,12 @@ require(['data-layer'], function(dataLayer) {
 
     field.appendChild(container);
 
+    function onVictory() {
+        alert('Victory');
+    }
 
+    function onFail() {
+        alert('Fail');
+    }
 
 })

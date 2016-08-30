@@ -1,7 +1,7 @@
 define(['cell'], function(cell) {
     var Cell = cell.cell;
 
-    function DataLayer(size) {
+    function DataLayer(size, onVictory, onFail) {
         this.size = size;
         this.bombsNum = 10;
         this.matrix = [];
@@ -9,6 +9,8 @@ define(['cell'], function(cell) {
         this.flags = [];
         this.firedNum = 0;
         this.total = this.size * this.size;
+        this.onVictory = onVictory;
+        this.onFail = onFail;
         this.init();
     }
 
@@ -41,7 +43,10 @@ define(['cell'], function(cell) {
         onHitBomb: function() {
             this.bombs.forEach(function(cell) {
                 cell.showContent();
-            })
+            });
+
+            this.onFail();
+
         },
         onHitEmpty: function(hittedCell) {
             var empty = this.checkEmpty(hittedCell.x, hittedCell.y),
@@ -267,9 +272,7 @@ define(['cell'], function(cell) {
 
 
             if(flaggedBombsNum === this.bombsNum) {
-                setTimeout(function() {
-                    alert();
-                });
+                this.onVictory()
             }
         }
 
